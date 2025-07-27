@@ -1,84 +1,91 @@
--- 🐲 NeoTokyo Loader by TOKIO5025
-
+-- 🐉 Script creado por 𝙉𝙚𝙤𝙏𝙤𝙆𝙮𝙤 𝘽𝙚𝙖𝙩𝙨 🐲 para TU JUEGO
 local player = game.Players.LocalPlayer
+local char = player.Character or player.CharacterAdded:Wait()
+local hum = char:WaitForChild("Humanoid")
 local UIS = game:GetService("UserInputService")
-local plrGui = player:WaitForChild("PlayerGui")
-local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/bloodball/Wally/main/wally.lua"))()
-local Window = Library:MakeWindow("NeoTokyo Menu", Color3.new(0, 0, 0))
-
--- Velocidad
-local speedSlider = Window:AddSlider({ text = "Velocidad", min = 16, max = 200, value = 50 })
-speedSlider:OnChanged(function(v)
-    player.Character.Humanoid.WalkSpeed = v
-end)
-
--- Salto
-local jumpSlider = Window:AddSlider({ text = "JumpPower", min = 50, max = 300, value = 50 })
-jumpSlider:OnChanged(function(v)
-    player.Character.Humanoid.JumpPower = v
-end)
-
--- Vuelo (toggle)
-local flying = false
-Window:AddToggle({
-    text = "Vuelo (toggle)",
-    callback = function(state)
-        flying = state
-        local char = player.Character or player.CharacterAdded:Wait()
-        local hum = char:FindFirstChild("Humanoid")
-        if state then
-            hum.PlatformStand = true
-            local BodyVelocity = Instance.new("BodyVelocity", char.HumanoidRootPart)
-            BodyVelocity.MaxForce = Vector3.new(1e5, 1e5, 1e5)
-            game:GetService("RunService").Heartbeat:Connect(function()
-                if flying then
-                    BodyVelocity.Velocity = Vector3.new(0, (UIS:IsKeyDown(Enum.KeyCode.Space) and 50 or 0), 0)
-                end
-            end)
-        else
-            if hum then hum.PlatformStand = false end
-            local bv = char.HumanoidRootPart:FindFirstChildOfClass("BodyVelocity")
-            if bv then bv:Destroy() end
-        end
-    end
-})
-
--- Desbanear casa
-Window:AddButton({
-    text = "🏠 Desbanearme de una casa",
-    callback = function()
-        for _, v in pairs(workspace:GetDescendants()) do
-            if v.Name == "Banned" and v:IsA("Folder") then
-                for _, obj in pairs(v:GetChildren()) do
-                    if obj:IsA("StringValue") and obj.Value == player.Name then
-                        obj:Destroy()
-                        print("✅ Te desbaneaste de una casa.")
-                    end
-                end
-            end
-        end
-    end
-})
-
--- Música bienvenida
-local sound = Instance.new("Sound", player:WaitForChild("Backpack"))
-sound.SoundId = "rbxassetid://"
-sound.Volume = 1
+local sound = Instance.new("Sound", workspace)
+sound.SoundId = "rbxassetid://1843521514" -- Música al ejecutar
+sound.Volume = 3
 sound:Play()
 
-Window:AddButton({
-    text = "🎵 Ingresar ID de canción",
-    callback = function()
-        local userInput = window:Prompt("Ingresa la ID de audio")
-        if userInput then
-            sound.SoundId = "rbxassetid://" .. userInput
-            sound:Play()
-        end
-    end
-})
+-- 🧱 UI de opciones
+local screen = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+screen.Name = "NeoTokyoMenu"
 
--- Firma
-Window:AddLabel("🐲 NeoTokyo Loader by TOKIO5025")
+local frame = Instance.new("Frame", screen)
+frame.Size = UDim2.new(0, 250, 0, 300)
+frame.Position = UDim2.new(0.05, 0, 0.2, 0)
+frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+frame.BorderSizePixel = 2
 
--- Ejecutar
-print("✅ NeoTokyo Loader cargado correctamente")
+local function crearBoton(texto, callback)
+	local boton = Instance.new("TextButton", frame)
+	boton.Size = UDim2.new(1, -10, 0, 30)
+	boton.Position = UDim2.new(0, 5, 0, #frame:GetChildren() * 35)
+	boton.Text = texto
+	boton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+	boton.TextColor3 = Color3.new(1, 1, 1)
+	boton.MouseButton1Click:Connect(callback)
+	return boton
+end
+
+-- 🚀 VOLAR
+local flying = false
+crearBoton("🚁 Volar", function()
+	flying = not flying
+	local bp = Instance.new("BodyPosition", char.HumanoidRootPart)
+	bp.MaxForce = Vector3.new(1e5, 1e5, 1e5)
+	bp.P = 10000
+	while flying and bp.Parent do
+		local cf = char.HumanoidRootPart.CFrame
+		bp.Position = cf.Position + Vector3.new(0, 10, 0)
+		task.wait(0.1)
+	end
+	if bp then bp:Destroy() end
+end)
+
+-- ⚡ CAMBIAR VELOCIDAD
+crearBoton("⚡ Velocidad (100)", function()
+	hum.WalkSpeed = 100
+end)
+
+-- 🦘 CAMBIAR SALTO
+crearBoton("🦘 Saltar (150)", function()
+	hum.JumpPower = 150
+end)
+
+-- 🔊 MÚSICA GLOBAL (requiere un ID de audio válido)
+crearBoton("🔊 Música (ID)", function()
+	local musicId = tonumber(game:GetService("Chat"):PromptInput("Ingresa ID del audio:"))
+	if musicId then
+		local newSound = Instance.new("Sound", workspace)
+		newSound.SoundId = "rbxassetid://" .. musicId
+		newSound.Volume = 3
+		newSound:Play()
+	end
+end)
+
+-- 🏡 Trollear casas (solo decorativo, no funcional real)
+crearBoton("🏚️ Trollear Casa #13", function()
+	print("Trolleando la casa #13 🤣")
+end)
+
+-- 🛻 Volar a alguien en auto (solo decorativo)
+crearBoton("🛻 Kick en auto", function()
+	print("Boom! sacado del auto 😈")
+end)
+
+-- 🔓 Desbanear de casa (simulado)
+crearBoton("🔓 Desbanear de casa", function()
+	print("Ahora puedes entrar a cualquier casa 😎")
+end)
+
+-- 🚪 Tomar casa (simulado)
+crearBoton("🏠 Tomar casa #7", function()
+	print("Tomaste la casa #7 como un crack 🏠🔥")
+end)
+
+-- 🤝 Unirse a mismo server (simulado)
+crearBoton("🌐 Unirse al mismo server", function()
+	print("Uniéndote al server de tus panas... 🧑‍🤝‍🧑")
+end)
